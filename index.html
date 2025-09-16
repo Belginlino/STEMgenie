@@ -109,7 +109,31 @@
             transform: scale(1);
             opacity: 1;
         }
-        
+
+        /* Mobile Menu Styles */
+        #mobile-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        #mobile-menu.open {
+            transform: translateX(0);
+        }
+
+        #mobile-menu .nav-link {
+            display: block;
+            text-align: center;
+            padding: 1.5rem 0;
+            font-size: 1.25rem;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body class="transition-colors duration-500">
@@ -124,6 +148,8 @@
                 <span id="user-points" class="text-gray-500 dark:text-gray-400">0 Pts</span>
             </div>
         </div>
+        
+        <!-- Desktop Nav -->
         <nav class="hidden md:flex flex-1 justify-center">
             <ul class="flex space-x-8">
                 <li><a href="#" data-page="dashboard" class="nav-link active px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-white transition-colors duration-300">Home</a></li>
@@ -132,12 +158,32 @@
                 <li><a href="#" data-page="profile" class="nav-link px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-white transition-colors duration-300">Profile</a></li>
             </ul>
         </nav>
+
         <div class="flex items-center space-x-4">
             <button id="dark-mode-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300">
                 <span class="material-icons text-gray-600 dark:text-gray-400">light_mode</span>
             </button>
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-toggle" class="md:hidden p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300">
+                <span class="material-icons text-gray-600 dark:text-gray-400">menu</span>
+            </button>
         </div>
     </header>
+
+    <!-- Mobile Nav Menu (hidden by default) -->
+    <div id="mobile-menu" class="md:hidden flex flex-col items-center justify-center space-y-8 p-8">
+        <button id="mobile-menu-close" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+            <span class="material-icons text-gray-600 dark:text-gray-400">close</span>
+        </button>
+        <nav>
+            <ul class="flex flex-col items-center">
+                <li><a href="#" data-page="dashboard" class="nav-link active px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-white transition-colors duration-300">Home</a></li>
+                <li><a href="#" data-page="learn" class="nav-link px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-white transition-colors duration-300">Learn</a></li>
+                <li><a href="#" data-page="quests" class="nav-link px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-white transition-colors duration-300">Quests</a></li>
+                <li><a href="#" data-page="profile" class="nav-link px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-white transition-colors duration-300">Profile</a></li>
+            </ul>
+        </nav>
+    </div>
 
     <!-- Main Content -->
     <main class="container mx-auto p-4 md:p-8">
@@ -319,14 +365,14 @@
     
     <script>
         /**
-         * Technology Stack
-         * - Frontend: HTML5, CSS3, JavaScript for a single-file web application.
-         * - Offline Storage: Local Storage for user progress persistence.
-         * - Gamification: Custom JavaScript logic.
-         * - Content: Pre-loaded educational modules and quiz questions.
-         * - AI Integration: Gemini API for explanations and text-to-speech.
-         * - UI/UX: Tailwind CSS for responsive and modern design.
-         */
+        * Technology Stack
+        * - Frontend: HTML5, CSS3, JavaScript for a single-file web application.
+        * - Offline Storage: Local Storage for user progress persistence.
+        * - Gamification: Custom JavaScript logic.
+        * - Content: Pre-loaded educational modules and quiz questions.
+        * - AI Integration: Gemini API for explanations and text-to-speech.
+        * - UI/UX: Tailwind CSS for responsive and modern design.
+        */
 
         // Quiz Questions Data (Expanded to >100 questions total)
         const allQuizzes = {
@@ -362,7 +408,7 @@
                 { id: "sci-q7", question: "What is the study of matter and its interactions?", options: ["Biology", "Physics", "Chemistry", "Geology"], answer: "Chemistry" },
                 { id: "sci-q8", question: "What is the formula for water?", options: ["$H_2O_2$", "$CO_2$", "$H_2O$", "$O_2$"], answer: "$H_2O$" },
                 { id: "sci-q9", question: "Which organelle is responsible for photosynthesis in plants?", options: ["Mitochondria", "Nucleus", "Chloroplast", "Vacuole"], answer: "Chloroplast" },
-                { id: "sci-q10", question: "What is the speed of light in a vacuum, approximately?", options: ["$3 \times 10^8$ m/s", "$3 \times 10^6$ m/s", "$1.5 \times 10^8$ m/s", "$3 \times 10^{10}$ m/s"], answer: "$3 \times 10^8$ m/s" },
+                { id: "sci-q10", question: "What is the speed of light in a vacuum, approximately?", options: ["$3 \\times 10^8$ m/s", "$3 \\times 10^6$ m/s", "$1.5 \\times 10^8$ m/s", "$3 \\times 10^{10}$ m/s"], answer: "$3 \\times 10^8$ m/s" },
                 { id: "sci-q11", question: "What is the boiling point of water in Celsius?", options: ["$0^\circ C$", "$50^\circ C$", "$100^\circ C$", "$212^\circ C$"], answer: "$100^\circ C$" },
                 { id: "sci-q12", question: "What is the process of a liquid turning into a gas?", options: ["Condensation", "Evaporation", "Sublimation", "Melting"], answer: "Evaporation" },
                 { id: "sci-q13", question: "Which type of rock is formed from cooled magma or lava?", options: ["Sedimentary", "Metamorphic", "Igneous", "Sandstone"], answer: "Igneous" },
@@ -491,7 +537,7 @@
                 totalPlayed: 0
             }
         };
-        
+
         let APP_DATA = JSON.parse(JSON.stringify(APP_DATA_DEFAULTS));
 
         // Local Storage Persistence
@@ -549,7 +595,10 @@
         const resetModal = document.getElementById('reset-modal');
         const confirmResetBtn = document.getElementById('confirm-reset');
         const cancelResetBtn = document.getElementById('cancel-reset');
-        
+        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuClose = document.getElementById('mobile-menu-close');
+
         // Utility Functions
         const showNotification = (message, type = 'info') => {
             notificationElement.textContent = message;
@@ -567,7 +616,7 @@
                 notificationElement.classList.remove(borderColor);
             }, 3000);
         };
-        
+
         const checkLevelUp = () => {
             const xpPerLevel = 500;
             const currentLevel = Math.floor(APP_DATA.user.xp / xpPerLevel) + 1;
@@ -581,7 +630,7 @@
                 showNotification(`Level Up! You are now Level ${currentLevel}!`, 'success');
             }
         };
-        
+
         const addXP = (amount) => {
             APP_DATA.user.xp += amount;
             APP_DATA.user.points += amount;
@@ -910,7 +959,7 @@
                 readAloudButton.disabled = false;
             }
         };
-        
+
         // Helper function to convert base64 to ArrayBuffer
         const base64ToArrayBuffer = (base64) => {
             const binaryString = window.atob(base64);
@@ -1094,7 +1143,7 @@
             } else if (lesson && lesson.status === 'completed') {
                 showNotification(`Quiz already completed! Your score was ${score}.`, 'info');
             } else {
-                 showNotification(`Quiz completed with score: ${score}.`, 'info');
+                    showNotification(`Quiz completed with score: ${score}.`, 'info');
             }
             lessonDisplay.innerHTML = `<h3 class="text-2xl font-bold mb-4">Quiz Completed</h3><p class="text-xl">Your Score: <span class="font-bold text-indigo-500">${score}</span></p>`;
             renderUI();
@@ -1166,7 +1215,7 @@
                 }
             }
         };
-        
+            
         const resetProgress = () => {
             resetModal.classList.remove('hidden');
             setTimeout(() => resetModal.classList.add('open'), 10);
@@ -1280,8 +1329,21 @@
                 e.preventDefault();
                 APP_DATA.currentPage = link.dataset.page;
                 renderUI();
+                mobileMenu.classList.remove('open');
             });
         });
+
+        if (mobileMenuToggle) {
+            mobileMenuToggle.addEventListener('click', () => {
+                mobileMenu.classList.add('open');
+            });
+        }
+        
+        if (mobileMenuClose) {
+            mobileMenuClose.addEventListener('click', () => {
+                mobileMenu.classList.remove('open');
+            });
+        }
 
         const lessonSearchInput = document.getElementById('lesson-search');
         if(lessonSearchInput) {
@@ -1298,7 +1360,7 @@
                 });
             });
         }
-        
+            
         const subjectCardsGrid = document.getElementById('subject-cards-grid');
         if (subjectCardsGrid) {
             subjectCardsGrid.addEventListener('click', (e) => {
@@ -1311,7 +1373,7 @@
                 }
             });
         }
-        
+            
         if (darkModeToggle) {
             darkModeToggle.addEventListener('click', () => {
                 document.documentElement.classList.toggle('dark');
@@ -1319,7 +1381,7 @@
                 saveUserData();
             });
         }
-        
+            
         if (closeRewardModalBtn) {
             closeRewardModalBtn.addEventListener('click', () => {
                 const modalContent = rewardModal.querySelector('div');
