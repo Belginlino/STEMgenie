@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STEMgenie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --primary-dark: #5a6fd8;
+            --secondary-color: #f093fb;
+            --text-color: #333;
+            --bg-color: #ffffff;
+            --bg-gradient-from: #667eea;
+            --bg-gradient-to: #764ba2;
+        }
+
+        .dark {
+            --text-color: #f3f4f6;
+            --bg-color: #1a202c;
+            --bg-gradient-from: #1f2937;
+            --bg-gradient-to: #111827;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-from), var(--bg-gradient-to));
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-header {
+            background-color: var(--bg-color);
+        }
+
+        .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .page-content {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        
+        .progress-circle {
+            background: conic-gradient(var(--primary-color) 0deg, var(--primary-color) var(--progress-degrees, 0deg), rgba(255,255,255,0.3) var(--progress-degrees, 0deg), rgba(255,255,255,0.3) 360deg);
+        }
+        
+        .dark .progress-circle {
+            background: conic-gradient(var(--secondary-color) 0deg, var(--secondary-color) var(--progress-degrees, 0deg), rgba(255,255,255,0.3) var(--progress-degrees, 0deg), rgba(255,255,255,0.3) 360deg);
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 1rem;
+            height: 1rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 5rem;
+            right: -100%;
+            transition: right 0.5s ease-in-out;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            right: 1.5rem;
+        }
+        
+        /* Quiz feedback styles */
+        .quiz-option.correct {
+            background-color: #d4edda;
+            border-color: #28a745;
+        }
+        .quiz-option.wrong {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+        }
+        .quiz-option.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        /* Modal Styles */
+        .modal {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal-content {
+            transform: scale(0.95);
+            opacity: 0;
+            transition: all 0.3s ease-in-out;
+        }
+        .modal.open .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* Mobile Menu Styles */
+        #mobile-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        #mobile-menu.open {
+            transform: translateX(0);
+        }
+
+        #mobile-menu .nav-link {
+            display: block;
+            text-align: center;
+            padding: 1.5rem 0;
+            font-size: 1.25rem;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="transition-colors duration-500">
+    <!-- Header -->
+    <header class="main-header sticky top-0 shadow-lg p-4 flex items-center justify-between z-50">
+        <div class="flex items-center space-x-4">
+            <div class="user-avatar-img w-10 h-10 rounded-full flex items-center justify-center text-white font-bold bg-gradient-to-br from-purple-500 to-indigo-600">
+                LZ
+            </div>
+            <div class="flex flex-col text-sm">
+                <span id="user-level" class="font-semibold text-gray-800 dark:text-gray-200">Level 1</span>
+                <span id="user-points" class="text-gray-500 dark:text-gray-400">0 Pts</span>
+            </div>
+        </div>
+        
+        <!-- Desktop Nav -->
+        <nav class="hidden md:flex flex-1 justify-center">
+            <ul class="flex space-x-8">
+                <li><a href="#" data-page="dashboard" class="nav-link active px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-white transition-colors duration-300">Home</a></li>
+                <li><a href="#" data-page="learn" class="nav-link px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-white transition-colors duration-300">Learn</a></li>
+                <li><a href="#" data-page="quests" class="nav-link px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-white transition-colors duration-300">Quests</a></li>
+                <li><a href="#" data-page="profile" class="nav-link px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-white transition-colors duration-300">Profile</a></li>
+            </ul>
+        </nav>
+
+        <div class="flex items-center space-x-4">
+            <button id="dark-mode-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300">
+                <span class="material-icons text-gray-600 dark:text-gray-400">light_mode</span>
+            </button>
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-toggle" class="md:hidden p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-300">
+                <span class="material-icons text-gray-600 dark:text-gray-400">menu</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Nav Menu (hidden by default) -->
+    <div id="mobile-menu" class="md:hidden flex flex-col items-center justify-center space-y-8 p-8">
+        <button id="mobile-menu-close" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+            <span class="material-icons text-gray-600 dark:text-gray-400">close</span>
+        </button>
+        <nav>
+            <ul class="flex flex-col items-center">
+                <li><a href="#" data-page="dashboard" class="nav-link active px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-white transition-colors duration-300">Home</a></li>
+                <li><a href="#" data-page="learn" class="nav-link px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-white transition-colors duration-300">Learn</a></li>
+                <li><a href="#" data-page="quests" class="nav-link px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-white transition-colors duration-300">Quests</a></li>
+                <li><a href="#" data-page="profile" class="nav-link px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-white transition-colors duration-300">Profile</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto p-4 md:p-8">
+        <!-- Dashboard Page -->
+        <section id="dashboard" class="page-content active p-6 rounded-xl shadow-xl transition-all duration-300">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- My Learning Path -->
+                <div class="lg:col-span-2">
+                    <h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">My Learning Path</h2>
+                    <div id="subject-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div class="subject-card math bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-6 rounded-xl shadow-lg relative cursor-pointer hover:scale-105 transition-transform duration-300" data-subject-id="math">
+                            <h3 class="text-2xl font-bold">Math</h3>
+                            <div class="progress-circle w-16 h-16 rounded-full flex items-center justify-center absolute top-4 right-4 shadow-md" style="--progress-degrees: 0deg;">
+                                <span class="progress-text text-white font-bold">0%</span>
+                            </div>
+                        </div>
+                        <div class="subject-card science bg-gradient-to-br from-pink-400 to-red-500 text-white p-6 rounded-xl shadow-lg relative cursor-pointer hover:scale-105 transition-transform duration-300" data-subject-id="science">
+                            <h3 class="text-2xl font-bold">Science</h3>
+                            <div class="progress-circle w-16 h-16 rounded-full flex items-center justify-center absolute top-4 right-4 shadow-md" style="--progress-degrees: 0deg;">
+                                <span class="progress-text text-white font-bold">0%</span>
+                            </div>
+                        </div>
+                        <div class="subject-card history bg-gradient-to-br from-blue-400 to-cyan-500 text-white p-6 rounded-xl shadow-lg relative cursor-pointer hover:scale-105 transition-transform duration-300" data-subject-id="history">
+                            <h3 class="text-2xl font-bold">History</h3>
+                            <div class="progress-circle w-16 h-16 rounded-full flex items-center justify-center absolute top-4 right-4 shadow-md" style="--progress-degrees: 0deg;">
+                                <span class="progress-text text-white font-bold">0%</span>
+                            </div>
+                        </div>
+                        <div class="subject-card english bg-gradient-to-br from-orange-400 to-rose-500 text-white p-6 rounded-xl shadow-lg relative cursor-pointer hover:scale-105 transition-transform duration-300" data-subject-id="english">
+                            <h3 class="text-2xl font-bold">English</h3>
+                            <div class="progress-circle w-16 h-16 rounded-full flex items-center justify-center absolute top-4 right-4 shadow-md" style="--progress-degrees: 0deg;">
+                                <span class="progress-text text-white font-bold">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Challenges & Achievements -->
+                <div class="lg:col-span-1 space-y-8">
+                    <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                        <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">Daily Challenges</h2>
+                        <ul id="daily-quests" class="space-y-2"></ul>
+                    </div>
+                    <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                        <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">Recent Achievements</h2>
+                        <div id="recent-achievements-list" class="space-y-2"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Learn Page -->
+        <section id="learn" class="page-content hidden p-6 rounded-xl shadow-xl">
+            <h2 id="module-title" class="text-3xl font-bold mb-2 text-gray-800 dark:text-gray-100">Module Title</h2>
+            <div id="module-progress" class="flex items-center space-x-4 mb-6">
+                <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div id="module-progress-fill" class="bg-indigo-500 h-2 rounded-full transition-all duration-500" style="width: 0%;"></div>
+                </div>
+                <span id="module-progress-text" class="text-sm font-medium text-gray-500 dark:text-gray-400">0/0</span>
+            </div>
+            
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Lesson Navigation -->
+                <div class="lg:w-1/3 bg-gray-100 dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">Lessons</h3>
+                        <div class="relative w-full ml-4">
+                            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                            <input id="lesson-search" type="text" placeholder="Search lessons..." class="w-full pl-10 pr-4 py-2 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                    <ul id="lessons-list" class="space-y-2"></ul>
+                </div>
+                <!-- Lesson/Quiz Display -->
+                <div class="lg:w-2/3 bg-gray-100 dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                    <div id="lesson-display-content" class="min-h-[400px]">
+                        <p class="text-gray-500 dark:text-gray-400 text-center py-20">Select a lesson from the left to begin.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quests Page -->
+        <section id="quests" class="page-content hidden p-6 rounded-xl shadow-xl">
+            <h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">Challenges</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">Daily Challenges</h3>
+                    <ul id="quests-daily-list" class="space-y-2"></ul>
+                </div>
+                <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">Weekly Challenges</h3>
+                    <ul id="quests-weekly-list" class="space-y-2"></ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Profile Page -->
+        <section id="profile" class="page-content hidden p-6 rounded-xl shadow-xl">
+            <h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">Your Profile</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl shadow-md">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">Progress Summary</h3>
+                    <div class="bg-white dark:bg-gray-700 rounded-lg p-6 flex flex-col space-y-4">
+                        <div class="flex items-center space-x-4">
+                            <span class="material-icons text-3xl text-indigo-500">trending_up</span>
+                            <div>
+                                <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">Current Streak</p>
+                                <p id="streak-count" class="text-gray-500 dark:text-gray-400">0 days</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="material-icons text-3xl text-yellow-500">military_tech</span>
+                            <div>
+                                <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">Total Points</p>
+                                <p id="total-points" class="text-gray-500 dark:text-gray-400">0</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="material-icons text-3xl text-green-500">done_all</span>
+                            <div>
+                                <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">Lessons Completed</p>
+                                <p id="lessons-completed" class="text-gray-500 dark:text-gray-400">0</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="material-icons text-3xl text-blue-500">assignment_turned_in</span>
+                            <div>
+                                <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">Quizzes Passed</p>
+                                <p id="quizzes-passed" class="text-gray-500 dark:text-gray-400">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Achievements & Stats -->
+                <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl shadow-md space-y-6">
+                    <div>
+                        <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">Achievements</h3>
+                        <div id="achievements-list" class="grid grid-cols-2 gap-4"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">Level Progress</h3>
+                        <div class="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-4 mb-2">
+                            <div id="xp-bar" class="bg-gradient-to-r from-purple-500 to-indigo-600 h-4 rounded-full transition-all duration-500" style="width: 0%;"></div>
+                        </div>
+                        <p id="xp-text" class="text-sm text-gray-500 dark:text-gray-400 text-right">0/500 XP</p>
+                    </div>
+                    <button id="reset-progress" class="w-full bg-red-500 text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition-colors duration-300">Reset All Progress</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="notification p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg border-l-4"></div>
+
+    <!-- Daily Reward Modal -->
+    <div id="reward-modal" class="modal fixed inset-0 flex items-center justify-center p-4 hidden z-[9999]">
+        <div class="modal-content bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl text-center max-w-sm w-full">
+            <h3 class="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 mb-2">Daily Reward!</h3>
+            <p class="text-gray-600 dark:text-gray-300 mb-6">You've earned <span class="font-bold text-lg text-indigo-500">+100</span> points for your daily login streak!</p>
+            <p class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Current Streak: <span id="streak-modal-count">0</span> days</p>
+            <button id="close-reward-modal" class="bg-indigo-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-600 transition-colors duration-300">Claim Reward</button>
+        </div>
+    </div>
+    
+    <!-- Custom Confirmation Modal for Reset -->
+    <div id="reset-modal" class="modal fixed inset-0 flex items-center justify-center p-4 hidden z-[9999]">
+        <div class="modal-content bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl text-center max-w-sm w-full">
+            <h3 class="text-2xl font-bold text-red-500 mb-4">Warning!</h3>
+            <p class="text-gray-600 dark:text-gray-300 mb-6">Are you sure you want to reset all your progress? This action cannot be undone.</p>
+            <div class="flex justify-center space-x-4">
+                <button id="cancel-reset" class="bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-400 transition-colors duration-300">Cancel</button>
+                <button id="confirm-reset" class="bg-red-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors duration-300">Reset</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        /**
+        * Technology Stack
+        * - Frontend: HTML5, CSS3, JavaScript for a single-file web application.
+        * - Offline Storage: Local Storage for user progress persistence.
+        * - Gamification: Custom JavaScript logic.
+        * - Content: Pre-loaded educational modules and quiz questions.
+        * - AI Integration: Gemini API for explanations and text-to-speech.
+        * - UI/UX: Tailwind CSS for responsive and modern design.
+        */
+
+        // Quiz Questions Data (Expanded to >100 questions total)
+        const allQuizzes = {
+            math: [
+                { id: "math-q1", question: "What is the square root of 144?", options: ["10", "12", "14", "16"], answer: "12" },
+                { id: "math-q2", question: "What is the value of Pi (π) rounded to two decimal places?", options: ["3.14", "3.16", "3.12", "3.01"], answer: "3.14" },
+                { id: "math-q3", question: "If a = 5 and b = 3, what is a squared plus b squared?", options: ["16", "34", "15", "64"], answer: "34" },
+                { id: "math-q4", question: "Solve for x: 2x + 7 = 21", options: ["x = 7", "x = 10", "x = 5", "x = 14"], answer: "x = 7" },
+                { id: "math-q5", question: "What is the area of a circle with a radius of 5?", options: ["10π", "25π", "50π", "100π"], answer: "25π" },
+                { id: "math-q6", question: "What is the derivative of $x^2$?", options: ["$x$", "$2x$", "$x^3/3$", "$2$"], answer: "$2x$" },
+                { id: "math-q7", question: "Solve for x: $3(x - 2) = 15$", options: ["$x = 7$", "$x = 5$", "$x = 9$", "$x = 11$"], answer: "$x = 7$" },
+                { id: "math-q8", question: "What is the value of $5!$?", options: ["25", "100", "120", "50"], answer: "120" },
+                { id: "math-q9", question: "A triangle has angles of $30^\circ$ and $90^\circ$. What is the third angle?", options: ["$45^\circ$", "$60^\circ$", "$80^\circ$", "$100^\circ$"], answer: "$60^\circ$" },
+                { id: "math-q10", question: "What is the greatest common divisor of 12 and 18?", options: ["2", "3", "6", "9"], answer: "6" },
+                { id: "math-q11", question: "What is the probability of rolling a 3 on a standard six-sided die?", options: ["1/2", "1/3", "1/6", "1/10"], answer: "1/6" },
+                { id: "math-q12", question: "The hypotenuse of a right triangle is 13 and one leg is 5. What is the length of the other leg?", options: ["8", "12", "14", "18"], answer: "12" },
+                { id: "math-q13", question: "What is the simplified form of the expression $2(x+3)$?", options: ["$2x+3$", "$2x+6$", "$x+6$", "$5x$"], answer: "$2x+6$" },
+                { id: "math-q14", question: "What is the area of a rectangle with length 8 and width 4?", options: ["12", "16", "24", "32"], answer: "32" },
+                { id: "math-q15", question: "What is the volume of a cube with a side length of 3?", options: ["9", "12", "27", "81"], answer: "27" },
+                { id: "math-q16", question: "What is the circumference of a circle with a radius of 7?", options: ["$7\pi$", "$14\pi$", "$21\pi$", "$49\pi$"], answer: "$14\pi$" },
+                { id: "math-q17", question: "Simplify the fraction $24/36$ to its lowest terms.", options: ["$1/2$", "$2/3$", "$3/4$", "$1/3$"], answer: "$2/3$" },
+                { id: "math-q18", question: "What is the median of the set {2, 5, 8, 1, 4}?", options: ["4", "3", "5", "8"], answer: "4" },
+                { id: "math-q19", question: "What is the value of $10^3$?", options: ["30", "100", "1000", "10000"], answer: "1000" },
+                { id: "math-q20", question: "How many sides does a heptagon have?", options: ["5", "6", "7", "8"], answer: "7" },
+            ],
+            science: [
+                { id: "sci-q1", question: "What planet is known as the 'Red Planet'?", options: ["Mars", "Jupiter", "Venus", "Saturn"], answer: "Mars" },
+                { id: "sci-q2", question: "What is the chemical symbol for gold?", options: ["Ag", "Au", "Pb", "Fe"], answer: "Au" },
+                { id: "sci-q3", question: "What is the powerhouse of the cell?", options: ["Nucleus", "Ribosome", "Mitochondria", "Cytoplasm"], answer: "Mitochondria" },
+                { id: "sci-q4", question: "What is the most abundant gas in Earth's atmosphere?", options: ["Oxygen", "Hydrogen", "Nitrogen", "Carbon Dioxide"], answer: "Nitrogen" },
+                { id: "sci-q5", question: "What force keeps planets in orbit around the sun?", options: ["Electromagnetism", "Gravity", "Friction", "Centripetal Force"], answer: "Gravity" },
+                { id: "sci-q6", question: "Which of the following is not a primary color of light?", options: ["Red", "Green", "Blue", "Yellow"], answer: "Yellow" },
+                { id: "sci-q7", question: "What is the study of matter and its interactions?", options: ["Biology", "Physics", "Chemistry", "Geology"], answer: "Chemistry" },
+                { id: "sci-q8", question: "What is the formula for water?", options: ["$H_2O_2$", "$CO_2$", "$H_2O$", "$O_2$"], answer: "$H_2O$" },
+                { id: "sci-q9", question: "Which organelle is responsible for photosynthesis in plants?", options: ["Mitochondria", "Nucleus", "Chloroplast", "Vacuole"], answer: "Chloroplast" },
+                { id: "sci-q10", question: "What is the speed of light in a vacuum, approximately?", options: ["$3 \\times 10^8$ m/s", "$3 \\times 10^6$ m/s", "$1.5 \\times 10^8$ m/s", "$3 \\times 10^{10}$ m/s"], answer: "$3 \\times 10^8$ m/s" },
+                { id: "sci-q11", question: "What is the boiling point of water in Celsius?", options: ["$0^\circ C$", "$50^\circ C$", "$100^\circ C$", "$212^\circ C$"], answer: "$100^\circ C$" },
+                { id: "sci-q12", question: "What is the process of a liquid turning into a gas?", options: ["Condensation", "Evaporation", "Sublimation", "Melting"], answer: "Evaporation" },
+                { id: "sci-q13", question: "Which type of rock is formed from cooled magma or lava?", options: ["Sedimentary", "Metamorphic", "Igneous", "Sandstone"], answer: "Igneous" },
+                { id: "sci-q14", question: "How many bones are in the average adult human body?", options: ["206", "106", "300", "250"], answer: "206" },
+                { id: "sci-q15", question: "What is a solar eclipse?", options: ["The Moon passing between the Earth and the Sun", "The Earth passing between the Moon and the Sun", "The Sun passing behind the Earth", "The Moon passing in front of Mars"], answer: "The Moon passing between the Earth and the Sun" },
+                { id: "sci-q16", question: "What is the smallest unit of an element?", options: ["Molecule", "Atom", "Proton", "Compound"], answer: "Atom" },
+                { id: "sci-q17", question: "Which planet is closest to the Sun?", options: ["Earth", "Mars", "Mercury", "Venus"], answer: "Mercury" },
+                { id: "sci-q18", question: "What is the main component of natural gas?", options: ["Propane", "Butane", "Methane", "Ethane"], answer: "Methane" },
+                { id: "sci-q19", question: "What is the process by which plants make their food?", options: ["Respiration", "Transpiration", "Fermentation", "Photosynthesis"], answer: "Photosynthesis" },
+                { id: "sci-q20", question: "Which acid is found in vinegar?", options: ["Citric acid", "Hydrochloric acid", "Sulfuric acid", "Acetic acid"], answer: "Acetic acid" },
+            ],
+            history: [
+                { id: "hist-q1", question: "Who was the first President of the United States?", options: ["Thomas Jefferson", "George Washington", "Abraham Lincoln", "John Adams"], answer: "George Washington" },
+                { id: "hist-q2", question: "In what year did the Titanic sink?", options: ["1912", "1914", "1918", "1920"], answer: "1912" },
+                { id: "hist-q3", question: "Who was the famous Queen of ancient Egypt?", options: ["Nefertiti", "Hatshepsut", "Cleopatra", "Isis"], answer: "Cleopatra" },
+                { id: "hist-q4", question: "The Roman Empire was divided into which two parts in 285 AD?", options: ["Eastern and Western", "Northern and Southern", "Imperial and Republican", "Pagan and Christian"], answer: "Eastern and Western" },
+                { id: "hist-q5", question: "The Hundred Years' War was fought between which two countries?", options: ["England and Spain", "France and Germany", "England and France", "Russia and Austria"], answer: "England and France" },
+                { id: "hist-q6", question: "What was the name of the ship on which Charles Darwin sailed?", options: ["The Pinta", "The Beagle", "The Endeavour", "The Mayflower"], answer: "The Beagle" },
+                { id: "hist-q7", question: "In what year did World War I begin?", options: ["1914", "1918", "1939", "1945"], answer: "1914" },
+                { id: "hist-q8", question: "Who was the first female Prime Minister of the United Kingdom?", options: ["Theresa May", "Queen Elizabeth II", "Margaret Thatcher", "Indira Gandhi"], answer: "Margaret Thatcher" },
+                { id: "hist-q9", question: "What famous document was signed in 1215 in England?", options: ["Bill of Rights", "Magna Carta", "Declaration of Independence", "Treaty of Versailles"], answer: "Magna Carta" },
+                { id: "hist-q10", question: "The Cold War was primarily a conflict between which two nations/blocs?", options: ["USA and China", "Germany and Russia", "USA and USSR", "England and France"], answer: "USA and USSR" },
+                { id: "hist-q11", question: "The Berlin Wall was a physical barrier that divided East and West Berlin. What year did it fall?", options: ["1985", "1989", "1991", "2000"], answer: "1989" },
+                { id: "hist-q12", question: "Who was the leader of Nazi Germany during World War II?", options: ["Winston Churchill", "Joseph Stalin", "Benito Mussolini", "Adolf Hitler"], answer: "Adolf Hitler" },
+                { id: "hist-q13", question: "What event is considered the start of the Great Depression?", options: ["The bombing of Pearl Harbor", "The signing of the Treaty of Versailles", "The stock market crash of 1929", "The end of World War I"], answer: "The stock market crash of 1929" },
+                { id: "hist-q14", question: "Who was the primary author of the Declaration of Independence?", options: ["Benjamin Franklin", "Thomas Jefferson", "John Adams", "George Washington"], answer: "Thomas Jefferson" },
+                { id: "hist-q15", question: "What ancient civilization built the pyramids at Giza?", options: ["The Romans", "The Greeks", "The Egyptians", "The Mayans"], answer: "The Egyptians" },
+                { id: "hist-q16", question: "The Renaissance originated in which country?", options: ["France", "Italy", "Spain", "Germany"], answer: "Italy" },
+                { id: "hist-q17", question: "Who was the first emperor of the Roman Empire?", options: ["Julius Caesar", "Nero", "Augustus", "Constantine"], answer: "Augustus" },
+                { id: "hist-q18", question: "What was the main cause of the French Revolution?", options: ["Religious conflict", "Economic inequality", "Invasion by Britain", "Rise of a new religion"], answer: "Economic inequality" },
+                { id: "hist-q19", question: "Who discovered America in 1492?", options: ["Ferdinand Magellan", "Christopher Columbus", "Marco Polo", "Vasco da Gama"], answer: "Christopher Columbus" },
+                { id: "hist-q20", question: "The fall of the Western Roman Empire is traditionally dated to what year?", options: ["410 AD", "476 AD", "500 AD", "600 AD"], answer: "476 AD" },
+            ],
+            english: [
+                { id: "eng-q1", question: "What part of speech is 'run'?", options: ["Noun", "Verb", "Adjective", "Adverb"], answer: "Verb" },
+                { id: "eng-q2", question: "Which of the following is a synonym for 'happy'?", options: ["Sad", "Joyful", "Angry", "Calm"], answer: "Joyful" },
+                { id: "eng-q3", question: "In the sentence 'She sings beautifully', which word is the adverb?", options: ["She", "sings", "beautifully", "the"], answer: "beautifully" },
+                { id: "eng-q4", question: "What is the plural of 'child'?", options: ["Childs", "Childrens", "Children", "Childen"], answer: "Children" },
+                { id: "eng-q5", question: "What is a 'simile'?", options: ["A direct comparison", "A comparison using 'like' or 'as'", "An exaggeration", "A figure of speech"], answer: "A comparison using 'like' or 'as'" },
+                { id: "eng-q6", question: "Which famous playwright wrote 'Romeo and Juliet'?", options: ["William Shakespeare", "Charles Dickens", "Jane Austen", "Mark Twain"], answer: "William Shakespeare" },
+                { id: "eng-q7", question: "What is the main verb in the sentence 'They are playing soccer'?", options: ["They", "are", "playing", "soccer"], answer: "playing" },
+                { id: "eng-q8", question: "What is an antonym?", options: ["A word with the same meaning", "A word with the opposite meaning", "A rhyming word", "A homophone"], answer: "A word with the opposite meaning" },
+                { id: "eng-q9", question: "Which of the following sentences uses a comma correctly?", options: ["He went to the store, and bought milk.", "He went, to the store and bought milk.", "He went to the store and bought milk.", "He went to the store and, bought milk."], answer: "He went to the store and bought milk." },
+                { id: "eng-q10", question: "What is the past tense of 'go'?", options: ["goed", "went", "gone", "go'd"], answer: "went" },
+                { id: "eng-q11", question: "Which literary device involves a character speaking their thoughts aloud?", options: ["Monologue", "Dialogue", "Soliloquy", "Aside"], answer: "Soliloquy" },
+                { id: "eng-q12", question: "What is the definition of a 'preposition'?", options: ["A word that describes a verb", "A word that connects two sentences", "A word that shows location or time", "A word that replaces a noun"], answer: "A word that shows location or time" },
+                { id: "eng-q13", question: "The phrase 'raining cats and dogs' is an example of what?", options: ["Alliteration", "Metaphor", "Hyperbole", "Idiom"], answer: "Idiom" },
+                { id: "eng-q14", question: "What is a 'haiku'?", options: ["A Japanese poem with three rhyming lines", "A 14-line sonnet", "A Japanese poem with a 5-7-5 syllable structure", "A type of free verse"], answer: "A Japanese poem with a 5-7-5 syllable structure" },
+                { id: "eng-q15", question: "Which word is a conjunction?", options: ["Quickly", "Because", "Under", "Happy"], answer: "Because" },
+                { id: "eng-q16", question: "What is the subject in the sentence 'The dog barks loudly'?", options: ["The dog", "barks", "loudly", "The"], answer: "The dog" },
+                { id: "eng-q17", question: "Which of the following is an example of a noun?", options: ["Run", "Blue", "Table", "Quickly"], answer: "Table" },
+                { id: "eng-q18", question: "What is the main character in a story called?", options: ["Antagonist", "Protagonist", "Narrator", "Author"], answer: "Protagonist" },
+                { id: "eng-q19", question: "Which punctuation mark is used to show a pause between two independent clauses?", options: ["Comma", "Period", "Semicolon", "Colon"], answer: "Semicolon" },
+                { id: "eng-q20", question: "What is the definition of 'alliteration'?", options: ["Repetition of vowel sounds", "Repetition of consonant sounds at the beginning of words", "A comparison of two unlike things", "A figure of speech"], answer: "Repetition of consonant sounds at the beginning of words" },
+            ],
+        };
+
+        const LEVEL_UP_POINTS = 500;
+        
+        // Application State - Default values
+        const APP_DATA_DEFAULTS = {
+            currentPage: 'dashboard',
+            darkMode: false,
+            lastLoginDate: null,
+            loginStreak: 0,
+            modules: {
+                math: {
+                    name: 'Algebra I',
+                    lessons: [
+                        { id: 'math-1', name: 'Introduction to Variables', content: 'Variables are like placeholders or containers for numbers we don\'t know yet. In a math problem, we use symbols like $x$ or $y$ to stand in for these unknown values. They are essential for writing equations that can be solved to find missing information. For example, in a recipe that serves 4 people, we might say "add $x$ cups of flour," where $x$ is the variable. If we want to serve 8 people, we can change the value of the variable to find the new amount of flour needed.', status: 'active' },
+                        { id: 'math-2', name: 'Solving One-Step Equations', content: 'To solve an equation for a variable, you need to isolate it on one side of the equal sign. The key is to use the **inverse operation**. This means you do the opposite of what is being done to the variable. For example, if you have the equation $x + 5 = 12$, you need to get rid of the "+ 5". The inverse operation of addition is subtraction. So, you would subtract 5 from both sides of the equation to keep it balanced: $x + 5 - 5 = 12 - 5$, which simplifies to $x = 7$.', status: 'active' },
+                        { id: 'math-3', name: 'Quiz: Intro to Algebra', type: 'quiz', status: 'active', quizQuestions: allQuizzes.math.slice(0, 10).map(q => q.id) },
+                    ]
+                },
+                science: {
+                    name: 'Biology Basics',
+                    lessons: [
+                        { id: 'sci-1', name: 'The Cell Theory', content: 'The **Cell Theory** is a cornerstone of modern biology. It states three main things: 1. All living things are made up of one or more cells. 2. The cell is the basic structural and organizational unit of all organisms. 3. All cells come from pre-existing cells. This theory tells us that a cell is the fundamental building block of life, much like how a single brick is the basic unit for building a house. All the complex organisms we see today, from plants to animals, are simply built from countless cells working together.', status: 'active' },
+                        { id: 'sci-2', name: 'Quiz: The Cell', type: 'quiz', status: 'active', quizQuestions: allQuizzes.science.slice(0, 10).map(q => q.id) },
+                        { id: 'sci-3', name: 'Lesson: Photosynthesis', content: '**Photosynthesis** is the process plants, algae, and some bacteria use to convert light energy into chemical energy in the form of glucose (sugar). It\'s essentially how plants "eat." The process requires three key ingredients: sunlight, water ($H_2O$), and carbon dioxide ($CO_2$). The plant takes in water through its roots and carbon dioxide through tiny pores on its leaves called stomata. Using the energy from sunlight, it converts these into glucose to fuel its growth and releases oxygen ($O_2$) as a byproduct. This is why plants are so vital for life on Earth!', status: 'active' },
+                    ]
+                },
+                history: {
+                    name: 'Ancient Civilizations',
+                    lessons: [
+                        { id: 'hist-1', name: 'Introduction to History', content: 'History is more than just a list of dates and names; it\'s the story of human experience. By studying the past, we can understand how societies, cultures, and governments were formed. It helps us see patterns in human behavior, learn from past mistakes, and appreciate the journey that led to our modern world. In essence, it provides a lens through which we can make sense of the present and prepare for the future. Without history, we would be like travelers without a map, unsure of where we\'ve been or where we\'re going.', status: 'active' },
+                        { id: 'hist-2', name: 'Ancient Egypt', content: 'Ancient Egypt was a powerful civilization centered along the Nile River. The Nile was its lifeline, providing fertile land for farming and a reliable trade route. The Egyptians were masters of architecture, building the famous pyramids as elaborate tombs for their pharaohs, who they believed to be gods. Their culture was rich in art, religion, and hieroglyphic writing. Pharaohs like Tutankhamun and powerful queens like Cleopatra left a lasting legacy that continues to fascinate us today. The civilization flourished for thousands of years, leaving behind monuments that stand as a testament to their incredible ingenuity and culture.', status: 'active' },
+                        { id: 'hist-3', name: 'Quiz: Ancient Egypt', type: 'quiz', status: 'active', quizQuestions: allQuizzes.history.slice(0, 10).map(q => q.id) },
+                    ]
+                },
+                english: {
+                    name: 'English Literature',
+                    lessons: [
+                        { id: 'eng-1', name: 'Literary Devices', content: 'Literary devices are techniques that writers use to create a special effect in their work. Think of them as tools in a writer\'s toolkit. For example, a **metaphor** directly compares two unlike things (e.g., "her voice was music to his ears"), while a **personification** gives human qualities to inanimate objects or animals (e.g., "the wind howled"). These devices make language more vivid, imaginative, and engaging for the reader, adding layers of meaning beyond the literal words on the page.', status: 'active' },
+                        { id: 'eng-2', name: 'Types of Sentences', content: 'In English, there are four main types of sentences, each with a different purpose. A **declarative** sentence makes a statement (e.g., "The sun is shining."). An **interrogative** sentence asks a question (e.g., "Are you ready?"). An **imperative** sentence gives a command or makes a request (e.g., "Please close the door."). Finally, an **exclamatory** sentence expresses strong emotion or excitement (e.g., "What a beautiful day!"). Understanding these types helps you write more clearly and intentionally.', status: 'active' },
+                        { id: 'eng-3', name: 'Quiz: English Basics', type: 'quiz', status: 'active', quizQuestions: allQuizzes.english.slice(0, 10).map(q => q.id) },
+                        { id: 'eng-4', name: 'Game: Word Scramble', type: 'game', content: '', status: 'active' }
+                    ]
+                },
+            },
+            user: {
+                points: 0,
+                xp: 0,
+                level: 1,
+                lessonsCompleted: 0,
+                quizzesPassed: 0
+            },
+            achievements: [],
+            quests: [
+                { id: 'daily-quest-1', name: 'Complete 1 Lesson', points: 50, completed: false, criteria: { type: 'lesson_completed', count: 1 } },
+                { id: 'daily-quest-2', name: 'Earn 100 Points', points: 100, completed: false, criteria: { type: 'points_earned', amount: 100 } },
+            ],
+            quizState: {
+                currentQuizQuestions: [],
+                currentQuestionIndex: 0,
+                selectedAnswer: null,
+                correctAnswersCount: 0,
+                subjectId: null,
+                lessonId: null,
+            },
+            gameState: {
+                words: ['LEARN', 'CODE', 'BUILD', 'GAME', 'SCIENCE'],
+                currentWord: '',
+                scrambledWord: '',
+                score: 0,
+                totalPlayed: 0
+            }
+        };
+
+        let APP_DATA = JSON.parse(JSON.stringify(APP_DATA_DEFAULTS));
+
+        // Local Storage Persistence
+        const saveUserData = () => {
+            try {
+                localStorage.setItem('learnZoneData', JSON.stringify(APP_DATA));
+                showNotification("Progress saved to local storage!", 'success');
+            } catch (error) {
+                console.error("Error saving data to local storage:", error);
+                showNotification("Error saving progress.", 'error');
+            }
+        };
+
+        const loadUserData = () => {
+            try {
+                const savedData = JSON.parse(localStorage.getItem('learnZoneData'));
+                if (savedData) {
+                    APP_DATA = savedData;
+                    if (APP_DATA.darkMode) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                    showNotification('Progress loaded!', 'success');
+                } else {
+                    showNotification('No saved data found. Starting fresh.', 'info');
+                }
+            } catch (e) {
+                console.error("Error parsing saved data:", e);
+                showNotification("Failed to load progress. Starting fresh.", 'error');
+            }
+            checkDailyLogin();
+            renderUI();
+        };
+
+        const userId = 'local-user';
+
+        // DOM Elements
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pages = document.querySelectorAll('.page-content');
+        const userLevelSpan = document.getElementById('user-level');
+        const userPointsSpan = document.getElementById('user-points');
+        const notificationElement = document.getElementById('notification-container');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const achievementsList = document.getElementById('achievements-list');
+        const dailyQuestsList = document.getElementById('daily-quests');
+        const questsPageDailyList = document.getElementById('quests-daily-list');
+        const questsPageWeeklyList = document.getElementById('quests-weekly-list');
+        const xpBar = document.getElementById('xp-bar');
+        const xpText = document.getElementById('xp-text');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const rewardModal = document.getElementById('reward-modal');
+        const closeRewardModalBtn = document.getElementById('close-reward-modal');
+        const streakCountModal = document.getElementById('streak-modal-count');
+        const resetModal = document.getElementById('reset-modal');
+        const confirmResetBtn = document.getElementById('confirm-reset');
+        const cancelResetBtn = document.getElementById('cancel-reset');
+        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuClose = document.getElementById('mobile-menu-close');
+
+        // Utility Functions
+        const showNotification = (message, type = 'info') => {
+            notificationElement.textContent = message;
+            notificationElement.className = `notification show bg-white dark:bg-gray-800 rounded-xl shadow-lg`;
+            
+            let borderColor = '';
+            if (type === 'success') borderColor = 'border-green-500';
+            if (type === 'error') borderColor = 'border-red-500';
+            if (type === 'info') borderColor = 'border-blue-500';
+            
+            notificationElement.classList.add(borderColor);
+
+            setTimeout(() => {
+                notificationElement.classList.remove('show');
+                notificationElement.classList.remove(borderColor);
+            }, 3000);
+        };
+
+        const checkLevelUp = () => {
+            const xpPerLevel = 500;
+            const currentLevel = Math.floor(APP_DATA.user.xp / xpPerLevel) + 1;
+            if (currentLevel > APP_DATA.user.level) {
+                APP_DATA.user.level = currentLevel;
+                APP_DATA.achievements.push({
+                    name: `Reached Level ${currentLevel}`,
+                    icon: 'star',
+                    timestamp: new Date().toISOString()
+                });
+                showNotification(`Level Up! You are now Level ${currentLevel}!`, 'success');
+            }
+        };
+
+        const addXP = (amount) => {
+            APP_DATA.user.xp += amount;
+            APP_DATA.user.points += amount;
+            checkLevelUp();
+            updateQuestsProgress('points_earned', amount);
+            saveUserData();
+            renderUI();
+        };
+
+        const checkDailyLogin = () => {
+            const today = new Date().toDateString();
+            const lastLogin = APP_DATA.lastLoginDate;
+            if (lastLogin !== today) {
+                if (lastLogin) {
+                    const lastLoginDate = new Date(lastLogin);
+                    const diffTime = Math.abs(new Date() - lastLoginDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (diffDays === 1) {
+                        APP_DATA.loginStreak++;
+                    } else {
+                        APP_DATA.loginStreak = 1;
+                    }
+                } else {
+                    APP_DATA.loginStreak = 1;
+                }
+                
+                APP_DATA.lastLoginDate = today;
+                addXP(100);
+                streakCountModal.textContent = APP_DATA.loginStreak;
+                rewardModal.classList.remove('hidden');
+                setTimeout(() => {
+                    rewardModal.querySelector('div').classList.remove('scale-95', 'opacity-0');
+                    rewardModal.querySelector('div').classList.add('scale-100', 'opacity-100');
+                }, 10);
+            }
+        };
+
+        const resetQuizState = () => {
+            APP_DATA.quizState.currentQuizQuestions = [];
+            APP_DATA.quizState.currentQuestionIndex = 0;
+            APP_DATA.quizState.selectedAnswer = null;
+            APP_DATA.quizState.correctAnswersCount = 0;
+            APP_DATA.quizState.subjectId = null;
+            APP_DATA.quizState.lessonId = null;
+        };
+
+        // UI Rendering Functions
+        const renderUI = () => {
+            const xpPerLevel = 500;
+            userLevelSpan.textContent = `Level ${APP_DATA.user.level}`;
+            userPointsSpan.textContent = `${APP_DATA.user.points.toLocaleString()} Pts`;
+
+            pages.forEach(page => page.classList.add('hidden'));
+            const activePage = document.getElementById(APP_DATA.currentPage);
+            if (activePage) {
+                activePage.classList.remove('hidden');
+            }
+
+            navLinks.forEach(link => {
+                link.classList.remove('active', 'bg-indigo-500', 'text-white');
+                link.classList.add('text-gray-600');
+                if (link.dataset.page === APP_DATA.currentPage) {
+                    link.classList.add('active', 'bg-indigo-500', 'text-white');
+                    link.classList.remove('text-gray-600');
+                }
+            });
+
+            if (APP_DATA.currentPage === 'dashboard') renderDashboard();
+            if (APP_DATA.currentPage === 'learn') renderLearnPage(APP_DATA.quizState.subjectId || 'math');
+            if (APP_DATA.currentPage === 'quests') renderQuestsPage();
+            if (APP_DATA.currentPage === 'profile') renderProfilePage();
+        };
+
+        const renderDashboard = () => {
+            // Render subject progress
+            document.querySelectorAll('.subject-card').forEach(card => {
+                const subjectId = card.dataset.subjectId;
+                const module = APP_DATA.modules[subjectId];
+                if (module) {
+                    const completedLessons = module.lessons.filter(l => l.status === 'completed').length;
+                    const totalLessons = module.lessons.length;
+                    const progressPercentage = totalLessons > 0 ? Math.floor((completedLessons / totalLessons) * 100) : 0;
+                    const progressDegrees = (progressPercentage / 100) * 360;
+                    const cardTitle = card.querySelector('h3');
+                    const progressCircle = card.querySelector('.progress-circle');
+                    const progressText = card.querySelector('.progress-text');
+                    if(cardTitle) cardTitle.textContent = module.name;
+                    if(progressCircle) progressCircle.style.setProperty('--progress-degrees', `${progressDegrees}deg`);
+                    if(progressText) progressText.textContent = `${progressPercentage}%`;
+                }
+            });
+
+            // Render daily quests in dashboard sidebar
+            if (dailyQuestsList) {
+                dailyQuestsList.innerHTML = '';
+                APP_DATA.quests.forEach(quest => {
+                    const li = document.createElement('li');
+                    li.className = `p-4 rounded-lg bg-white dark:bg-gray-700 flex items-center space-x-2 transition-all duration-300 ${quest.completed ? 'opacity-50 line-through' : ''}`;
+                    li.innerHTML = `<span class="material-icons text-green-500">${quest.completed ? 'check_circle' : 'radio_button_unchecked'}</span><span class="flex-1">${quest.name}</span><span class="text-sm text-gray-500 dark:text-gray-400 font-semibold">+${quest.points} XP</span>`;
+                    dailyQuestsList.appendChild(li);
+                });
+            }
+            
+            // Render recent achievements
+            const recentAchievementsDiv = document.getElementById('recent-achievements-list');
+            if (recentAchievementsDiv) {
+                recentAchievementsDiv.innerHTML = '';
+                const recentAchievements = APP_DATA.achievements.slice(-3);
+                if (recentAchievements.length > 0) {
+                    recentAchievements.forEach(ach => {
+                        const item = document.createElement('div');
+                        item.className = 'p-4 rounded-lg bg-white dark:bg-gray-700 flex items-center space-x-2 shadow-sm';
+                        item.innerHTML = `<span class="material-icons text-yellow-500">${ach.icon}</span> <span>${ach.name}</span>`;
+                        recentAchievementsDiv.appendChild(item);
+                    });
+                } else {
+                    recentAchievementsDiv.innerHTML = '<p class="text-gray-500 text-center dark:text-gray-400">No achievements yet. Keep learning!</p>';
+                }
+            }
+        };
+
+        const renderLearnPage = (subjectId) => {
+            resetQuizState();
+            const module = APP_DATA.modules[subjectId];
+            if (!module) return;
+
+            const moduleHeader = document.getElementById('module-title');
+            const progressBar = document.getElementById('module-progress-fill');
+            const moduleProgressText = document.getElementById('module-progress-text');
+            const lessonsContainer = document.getElementById('lessons-list');
+            const lessonDisplay = document.getElementById('lesson-display-content');
+
+            if(moduleHeader) moduleHeader.textContent = module.name;
+            if(lessonsContainer) lessonsContainer.innerHTML = '';
+
+            const completedLessons = module.lessons.filter(l => l.status === 'completed').length;
+            if(moduleProgressText) moduleProgressText.textContent = `${completedLessons}/${module.lessons.length}`;
+            if(progressBar) progressBar.style.width = `${(completedLessons / module.lessons.length) * 100}%`;
+
+            module.lessons.forEach((lesson, index) => {
+                const li = document.createElement('li');
+                li.className = 'p-4 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-300 cursor-pointer flex items-center justify-between shadow-sm';
+                li.dataset.lessonId = lesson.id;
+                li.dataset.subjectId = subjectId;
+
+                let icon = '';
+                if (lesson.status === 'completed') {
+                    li.classList.add('opacity-70');
+                    icon = '<span class="material-icons text-green-500">check_circle</span>';
+                } else if (lesson.status === 'locked') {
+                    li.classList.add('opacity-50', 'cursor-not-allowed');
+                    icon = '<span class="material-icons text-gray-400">lock</span>';
+                } else if (lesson.status === 'active') {
+                    li.classList.add('bg-indigo-100', 'dark:bg-indigo-900', 'text-indigo-800', 'dark:text-indigo-200', 'font-semibold');
+                    icon = '<span class="material-icons text-indigo-500">play_circle_filled</span>';
+                }
+
+                if (lesson.type === 'game') {
+                    icon = '<span class="material-icons text-purple-500">gamepad</span>';
+                } else if (lesson.type === 'quiz') {
+                    icon = '<span class="material-icons text-red-500">assignment</span>';
+                }
+                
+                li.innerHTML = `<span class="truncate">${lesson.name}</span> ${icon}`;
+
+                li.addEventListener('click', () => {
+                    if (lesson.status === 'locked') {
+                        showNotification('Lesson is locked! Complete the previous lesson to unlock.', 'error');
+                        return;
+                    }
+                    document.querySelectorAll('#lessons-list .bg-indigo-100, .bg-indigo-900').forEach(item => item.classList.remove('bg-indigo-100', 'dark:bg-indigo-900', 'text-indigo-800', 'dark:text-indigo-200', 'font-semibold'));
+                    li.classList.add('bg-indigo-100', 'dark:bg-indigo-900', 'text-indigo-800', 'dark:text-indigo-200', 'font-semibold');
+                    loadLesson(subjectId, lesson);
+                });
+
+                if(lessonsContainer) lessonsContainer.appendChild(li);
+            });
+
+            if(lessonDisplay) lessonDisplay.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-20">Select a lesson from the left to begin.</p>';
+        };
+
+        const loadLesson = (subjectId, lesson) => {
+            const lessonDisplay = document.getElementById('lesson-display-content');
+            if (!lessonDisplay) return;
+            resetQuizState();
+
+            if (lesson.type === 'quiz') {
+                startQuiz(subjectId, lesson);
+                return;
+            }
+            
+            if (lesson.type === 'game') {
+                startGame(subjectId, lesson);
+                return;
+            }
+
+            lessonDisplay.innerHTML = `
+                <h3 class="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">${lesson.name}</h3>
+                <div id="lesson-text" class="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-300">
+                    <p>${lesson.content}</p>
+                </div>
+                <div class="mt-8 flex flex-col sm:flex-row gap-4">
+                    <button class="quiz-btn bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-300" id="mark-complete">Mark Complete</button>
+                    <button class="quiz-btn bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-300" id="explain-gemini">✨ Explain with AI</button>
+                    <button class="quiz-btn bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-300" id="read-aloud">🎧 Read Aloud</button>
+                </div>
+                <div id="ai-response-container" class="mt-8 p-6 rounded-lg bg-gray-200 dark:bg-gray-700 hidden">
+                    <h4 class="text-xl font-semibold mb-2">AI Explanation</h4>
+                    <p id="ai-response-text" class="text-gray-700 dark:text-gray-200"></p>
+                </div>
+            `;
+            
+            const markCompleteBtn = document.getElementById('mark-complete');
+            if (markCompleteBtn) {
+                markCompleteBtn.addEventListener('click', () => {
+                    const currentLesson = APP_DATA.modules[subjectId].lessons.find(l => l.id === lesson.id);
+                    if (currentLesson.status !== 'completed') {
+                        currentLesson.status = 'completed';
+                        APP_DATA.user.lessonsCompleted++;
+                        addXP(50);
+                        unlockNextLesson(subjectId);
+                        updateQuestsProgress('lesson_completed');
+                        showNotification('Lesson completed! +50 XP', 'success');
+                        saveUserData();
+                        renderUI();
+                    } else {
+                        showNotification('Lesson already completed!', 'info');
+                    }
+                });
+            }
+
+            const explainGeminiBtn = document.getElementById('explain-gemini');
+            if (explainGeminiBtn) {
+                explainGeminiBtn.addEventListener('click', () => explainWithGemini(lesson.content));
+            }
+            
+            const readAloudBtn = document.getElementById('read-aloud');
+            if (readAloudBtn) {
+                readAloudBtn.addEventListener('click', () => readWithGemini(lesson.content));
+            }
+        };
+
+        const explainWithGemini = async (text) => {
+            const aiResponseContainer = document.getElementById('ai-response-container');
+            const aiResponseText = document.getElementById('ai-response-text');
+            if (!aiResponseContainer || !aiResponseText) return;
+
+            aiResponseContainer.classList.remove('hidden');
+            aiResponseText.innerHTML = '<div class="spinner text-center"></div>';
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            const systemPrompt = "You are a friendly and knowledgeable AI tutor. Explain the following concept in simple, easy-to-understand terms, using an analogy if possible. Keep it concise, under 100 words.";
+            const userQuery = `Explain this concept: ${text}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                const explanation = result?.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I couldn\'t generate an explanation.';
+                aiResponseText.innerHTML = explanation;
+            } catch (error) {
+                aiResponseText.innerHTML = 'Failed to get an explanation. Please try again later.';
+                console.error('Gemini API Error:', error);
+            }
+        };
+
+        const readWithGemini = async (text) => {
+            const readAloudButton = document.getElementById('read-aloud');
+            if (!readAloudButton) return;
+            
+            readAloudButton.innerHTML = '<span class="spinner"></span> Loading...';
+            readAloudButton.disabled = true;
+
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: text }] }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: "Puck" }
+                        }
+                    }
+                },
+                model: "gemini-2.5-flash-preview-tts"
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                const audioData = result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+                if (audioData) {
+                    const sampleRate = 16000;
+                    const pcmData = base64ToArrayBuffer(audioData);
+                    const pcm16 = new Int16Array(pcmData);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                } else {
+                    showNotification('Audio generation failed.', 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to generate audio.', 'error');
+                console.error('TTS API Error:', error);
+            } finally {
+                readAloudButton.innerHTML = '🎧 Read Aloud';
+                readAloudButton.disabled = false;
+            }
+        };
+
+        // Helper function to convert base64 to ArrayBuffer
+        const base64ToArrayBuffer = (base64) => {
+            const binaryString = window.atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        };
+
+        // Helper function to convert PCM to WAV format
+        const pcmToWav = (pcmData, sampleRate) => {
+            const dataLength = pcmData.length * 2;
+            const buffer = new ArrayBuffer(44 + dataLength);
+            const view = new DataView(buffer);
+            let offset = 0;
+
+            const writeString = (str) => {
+                for (let i = 0; i < str.length; i++) {
+                    view.setUint8(offset + i, str.charCodeAt(i));
+                }
+            };
+
+            writeString('RIFF');
+            offset += 4;
+            view.setUint32(offset, 36 + dataLength, true);
+            offset += 4;
+            writeString('WAVE');
+            offset += 4;
+
+            writeString('fmt ');
+            offset += 4;
+            view.setUint32(offset, 16, true);
+            offset += 4;
+            view.setUint16(offset, 1, true); // PCM format
+            offset += 2;
+            view.setUint16(offset, 1, true); // Mono
+            offset += 2;
+            view.setUint32(offset, sampleRate, true);
+            offset += 4;
+            view.setUint32(offset, sampleRate * 2, true); // Byte rate
+            offset += 4;
+            view.setUint16(offset, 2, true); // Block align
+            offset += 2;
+            view.setUint16(offset, 16, true); // Bits per sample
+            offset += 2;
+
+            writeString('data');
+            offset += 4;
+            view.setUint32(offset, dataLength, true);
+            offset += 4;
+            
+            for (let i = 0; i < pcmData.length; i++) {
+                view.setInt16(offset, pcmData[i], true);
+                offset += 2;
+            }
+
+            return new Blob([view], { type: 'audio/wav' });
+        };
+
+        const unlockNextLesson = (subjectId) => {
+            const module = APP_DATA.modules[subjectId];
+            const currentIndex = module.lessons.findIndex(l => l.status === 'completed');
+            if (currentIndex !== -1 && currentIndex < module.lessons.length - 1) {
+                const nextLesson = module.lessons[currentIndex + 1];
+                if (nextLesson.status === 'locked') {
+                    nextLesson.status = 'active';
+                }
+            }
+        };
+
+        const startQuiz = (subjectId, lesson) => {
+            APP_DATA.quizState.subjectId = subjectId;
+            APP_DATA.quizState.lessonId = lesson.id;
+            APP_DATA.quizState.currentQuestionIndex = 0;
+            APP_DATA.quizState.correctAnswersCount = 0;
+            APP_DATA.quizState.selectedAnswer = null;
+            APP_DATA.quizState.currentQuizQuestions = lesson.quizQuestions.map(qid =>
+                allQuizzes[subjectId]?.find(q => q.id === qid)
+            ).filter(q => q);
+            renderQuiz();
+        };
+
+        const renderQuiz = () => {
+            const lessonDisplay = document.getElementById('lesson-display-content');
+            if (!lessonDisplay) return;
+            const { currentQuizQuestions, currentQuestionIndex } = APP_DATA.quizState;
+            const questionObj = currentQuizQuestions[currentQuestionIndex];
+            
+            if (!questionObj) {
+                finishQuiz();
+                return;
+            }
+
+            lessonDisplay.innerHTML = `
+                <div class="quiz-container">
+                    <div class="quiz-question mb-6 text-xl font-semibold text-gray-800 dark:text-gray-100">${currentQuestionIndex + 1}. ${questionObj.question}</div>
+                    <div class="quiz-options space-y-3 mb-6">
+                        ${questionObj.options.map(option => `<div class="quiz-option p-4 rounded-lg bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 cursor-pointer hover:border-indigo-500 transition-colors duration-200">${option}</div>`).join('')}
+                    </div>
+                    <div class="flex justify-end">
+                        <button class="quiz-btn bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-300" id="next-question">Next</button>
+                    </div>
+                </div>
+            `;
+
+            const options = document.querySelectorAll('.quiz-option');
+            options.forEach(option => {
+                option.addEventListener('click', () => {
+                    options.forEach(o => o.classList.remove('selected', 'border-indigo-500', 'bg-indigo-100', 'dark:bg-indigo-900'));
+                    option.classList.add('selected', 'border-indigo-500', 'bg-indigo-100', 'dark:bg-indigo-900');
+                    APP_DATA.quizState.selectedAnswer = option.textContent;
+                });
+            });
+
+            const nextQuestionBtn = document.getElementById('next-question');
+            if (nextQuestionBtn) {
+                nextQuestionBtn.addEventListener('click', () => {
+                    if (APP_DATA.quizState.selectedAnswer === null) {
+                        showNotification('Please select an answer!', 'error');
+                        return;
+                    }
+                    const selectedOption = document.querySelector('.quiz-option.selected');
+                    const isCorrect = APP_DATA.quizState.selectedAnswer === questionObj.answer;
+
+                    options.forEach(o => o.classList.add('disabled'));
+
+                    if (isCorrect) {
+                        selectedOption.classList.remove('bg-indigo-100', 'dark:bg-indigo-900');
+                        selectedOption.classList.add('correct');
+                        APP_DATA.quizState.correctAnswersCount++;
+                        showNotification('Correct!', 'success');
+                    } else {
+                        selectedOption.classList.remove('bg-indigo-100', 'dark:bg-indigo-900');
+                        selectedOption.classList.add('wrong');
+                        options.forEach(o => {
+                            if (o.textContent === questionObj.answer) {
+                                o.classList.add('correct');
+                            }
+                        });
+                        showNotification('Wrong answer.', 'error');
+                    }
+
+                    setTimeout(() => {
+                        APP_DATA.quizState.currentQuestionIndex++;
+                        APP_DATA.quizState.selectedAnswer = null;
+
+                        if (APP_DATA.quizState.currentQuestionIndex < currentQuizQuestions.length) {
+                            renderQuiz();
+                        } else {
+                            finishQuiz();
+                        }
+                    }, 1500);
+                });
+            }
+        };
+
+        const finishQuiz = () => {
+            const { correctAnswersCount, currentQuizQuestions, subjectId, lessonId } = APP_DATA.quizState;
+            const lessonDisplay = document.getElementById('lesson-display-content');
+            if (!lessonDisplay) return;
+
+            const totalQuestions = currentQuizQuestions.length;
+            const score = `${correctAnswersCount}/${totalQuestions}`;
+
+            const lesson = APP_DATA.modules[subjectId].lessons.find(l => l.id === lessonId);
+            
+            if (lesson && lesson.status !== 'completed') {
+                if (correctAnswersCount === totalQuestions) {
+                    lesson.status = 'completed';
+                    APP_DATA.user.quizzesPassed++;
+                    addXP(100);
+                    unlockNextLesson(subjectId);
+                    updateQuestsProgress('points_earned', 100);
+                    showNotification(`Quiz passed! +100 XP`, 'success');
+                } else {
+                    showNotification(`Quiz failed. Score: ${score}`, 'error');
+                }
+                saveUserData();
+            } else if (lesson && lesson.status === 'completed') {
+                showNotification(`Quiz already completed! Your score was ${score}.`, 'info');
+            } else {
+                    showNotification(`Quiz completed with score: ${score}.`, 'info');
+            }
+            lessonDisplay.innerHTML = `<h3 class="text-2xl font-bold mb-4">Quiz Completed</h3><p class="text-xl">Your Score: <span class="font-bold text-indigo-500">${score}</span></p>`;
+            renderUI();
+        };
+
+        const updateQuestsProgress = (type, amount = 1) => {
+            APP_DATA.quests.forEach(quest => {
+                if (!quest.completed) {
+                    if (quest.criteria.type === type) {
+                        if (type === 'lesson_completed') {
+                            if (APP_DATA.user.lessonsCompleted >= quest.criteria.count) {
+                                quest.completed = true;
+                                addXP(quest.points);
+                                showNotification(`${quest.name} Completed! +${quest.points} XP`, 'success');
+                            }
+                        } else if (type === 'points_earned') {
+                            if (APP_DATA.user.points >= quest.criteria.amount) {
+                                quest.completed = true;
+                                addXP(quest.points);
+                                showNotification(`${quest.name} Completed! +${quest.points} XP`, 'success');
+                            }
+                        }
+                    }
+                }
+            });
+        };
+
+        const renderQuestsPage = () => {
+            if (questsPageDailyList) {
+                questsPageDailyList.innerHTML = '';
+                APP_DATA.quests.forEach(quest => {
+                    const li = document.createElement('li');
+                    li.className = `p-4 rounded-lg bg-white dark:bg-gray-700 flex items-center space-x-2 transition-all duration-300 shadow-sm ${quest.completed ? 'opacity-50 line-through' : ''}`;
+                    li.innerHTML = `<span class="material-icons text-green-500">${quest.completed ? 'check_circle' : 'radio_button_unchecked'}</span><span class="flex-1">${quest.name}</span><span class="text-sm text-gray-500 dark:text-gray-400 font-semibold">+${quest.points} XP</span>`;
+                    questsPageDailyList.appendChild(li);
+                });
+            }
+            // Placeholder for weekly quests
+            if (questsPageWeeklyList) {
+                questsPageWeeklyList.innerHTML = '<li class="p-4 rounded-lg bg-white dark:bg-gray-700 flex items-center space-x-2 shadow-sm opacity-50"><span class="material-icons text-gray-400">lock</span><span class="flex-1">New challenges unlocked weekly!</span></li>';
+            }
+        };
+
+        const renderProfilePage = () => {
+            const xpPerLevel = 500;
+            const xpToNextLevel = xpPerLevel - (APP_DATA.user.xp % xpPerLevel);
+            const progressPercentage = (APP_DATA.user.xp % xpPerLevel) / xpPerLevel * 100;
+
+            if (userIdDisplay) userIdDisplay.textContent = userId;
+            if (document.getElementById('streak-count')) document.getElementById('streak-count').textContent = `${APP_DATA.loginStreak} days`;
+            if (document.getElementById('total-points')) document.getElementById('total-points').textContent = APP_DATA.user.points.toLocaleString();
+            if (document.getElementById('lessons-completed')) document.getElementById('lessons-completed').textContent = APP_DATA.user.lessonsCompleted;
+            if (document.getElementById('quizzes-passed')) document.getElementById('quizzes-passed').textContent = APP_DATA.user.quizzesPassed;
+
+            if (xpBar) xpBar.style.width = `${progressPercentage}%`;
+            if (xpText) xpText.textContent = `${APP_DATA.user.xp % xpPerLevel}/${xpPerLevel} XP to Level ${APP_DATA.user.level + 1}`;
+            
+            if (achievementsList) {
+                achievementsList.innerHTML = '';
+                if (APP_DATA.achievements.length > 0) {
+                    APP_DATA.achievements.forEach(ach => {
+                        const item = document.createElement('div');
+                        item.className = 'p-4 rounded-lg bg-white dark:bg-gray-700 flex items-center space-x-2 shadow-sm';
+                        item.innerHTML = `<span class="material-icons text-yellow-500">${ach.icon}</span> <span>${ach.name}</span>`;
+                        achievementsList.appendChild(item);
+                    });
+                } else {
+                    achievementsList.innerHTML = '<p class="text-gray-500 dark:text-gray-400">No achievements yet. Keep learning!</p>';
+                }
+            }
+        };
+            
+        const resetProgress = () => {
+            resetModal.classList.remove('hidden');
+            setTimeout(() => resetModal.classList.add('open'), 10);
+        };
+
+        const confirmReset = () => {
+            localStorage.removeItem('learnZoneData');
+            APP_DATA = JSON.parse(JSON.stringify(APP_DATA_DEFAULTS));
+            resetModal.classList.remove('open');
+            setTimeout(() => resetModal.classList.add('hidden'), 300);
+            showNotification('All progress has been reset.', 'info');
+            renderUI();
+        };
+
+        const cancelReset = () => {
+            resetModal.classList.remove('open');
+            setTimeout(() => resetModal.classList.add('hidden'), 300);
+        };
+
+        // Mini-Game Logic (Word Scramble)
+        const startGame = (subjectId, lesson) => {
+            const lessonDisplay = document.getElementById('lesson-display-content');
+            if (!lessonDisplay) return;
+
+            lessonDisplay.innerHTML = `
+                <div class="flex flex-col items-center space-y-4">
+                    <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Word Scramble</h3>
+                    <p class="text-gray-600 dark:text-gray-300">Unscramble the word to earn points!</p>
+                    <canvas id="gameCanvas" width="300" height="100" class="bg-white dark:bg-gray-700 rounded-lg shadow-inner"></canvas>
+                    <input type="text" id="answerInput" placeholder="Enter your guess..." class="w-full max-w-sm px-4 py-2 rounded-lg bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-center text-xl font-bold">
+                    <button id="submitAnswer" class="bg-green-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-green-600 transition-colors duration-300">Submit</button>
+                    <p id="gameStatus" class="text-lg font-semibold text-center"></p>
+                    <div class="flex space-x-4">
+                        <button id="nextGameWord" class="bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-600 transition-colors duration-300 hidden">Next Word</button>
+                        <button id="endGame" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors duration-300">End Game</button>
+                    </div>
+                </div>
+            `;
+            
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            const input = document.getElementById('answerInput');
+            const submitBtn = document.getElementById('submitAnswer');
+            const nextBtn = document.getElementById('nextGameWord');
+            const endBtn = document.getElementById('endGame');
+            const statusText = document.getElementById('gameStatus');
+
+            const words = APP_DATA.gameState.words;
+            let currentWord = '';
+            let scrambledWord = '';
+
+            const shuffle = (array) => {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            };
+
+            const drawWord = (word, color) => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = color;
+                ctx.font = "bold 48px 'Inter', sans-serif";
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(word, canvas.width / 2, canvas.height / 2);
+            };
+
+            const newWord = () => {
+                const randomIndex = Math.floor(Math.random() * words.length);
+                currentWord = words[randomIndex].toUpperCase();
+                let wordArray = currentWord.split('');
+                scrambledWord = shuffle(wordArray).join('');
+                while (scrambledWord === currentWord) {
+                    scrambledWord = shuffle(wordArray).join('');
+                }
+                drawWord(scrambledWord, '#333');
+                input.value = '';
+                statusText.textContent = '';
+                submitBtn.disabled = false;
+                nextBtn.classList.add('hidden');
+            };
+
+            const checkAnswer = () => {
+                if (input.value.toUpperCase() === currentWord) {
+                    drawWord('CORRECT!', '#28a745');
+                    addXP(25);
+                    APP_DATA.gameState.score += 1;
+                    statusText.textContent = `Correct! +25 XP`;
+                    submitBtn.disabled = true;
+                    nextBtn.classList.remove('hidden');
+                } else {
+                    drawWord('TRY AGAIN', '#dc3545');
+                    statusText.textContent = `Incorrect, try again!`;
+                }
+            };
+            
+            submitBtn.addEventListener('click', checkAnswer);
+            nextBtn.addEventListener('click', newWord);
+            endBtn.addEventListener('click', () => {
+                showNotification(`Game Over! Your score: ${APP_DATA.gameState.score}`, 'info');
+                loadLesson(subjectId, lesson); // Re-load the lesson content to reset the game
+            });
+
+            newWord();
+        };
+
+        // Event Listeners
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                APP_DATA.currentPage = link.dataset.page;
+                renderUI();
+                mobileMenu.classList.remove('open');
+            });
+        });
+
+        if (mobileMenuToggle) {
+            mobileMenuToggle.addEventListener('click', () => {
+                mobileMenu.classList.add('open');
+            });
+        }
+        
+        if (mobileMenuClose) {
+            mobileMenuClose.addEventListener('click', () => {
+                mobileMenu.classList.remove('open');
+            });
+        }
+
+        const lessonSearchInput = document.getElementById('lesson-search');
+        if(lessonSearchInput) {
+            lessonSearchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                const lessons = document.querySelectorAll('#lessons-list li');
+                lessons.forEach(lesson => {
+                    const lessonName = lesson.textContent.toLowerCase();
+                    if (lessonName.includes(query)) {
+                        lesson.style.display = 'flex';
+                    } else {
+                        lesson.style.display = 'none';
+                    }
+                });
+            });
+        }
+            
+        const subjectCardsGrid = document.getElementById('subject-cards-grid');
+        if (subjectCardsGrid) {
+            subjectCardsGrid.addEventListener('click', (e) => {
+                const card = e.target.closest('.subject-card');
+                if (card) {
+                    const subjectId = card.dataset.subjectId;
+                    APP_DATA.currentPage = 'learn';
+                    APP_DATA.quizState.subjectId = subjectId;
+                    renderUI();
+                }
+            });
+        }
+            
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                APP_DATA.darkMode = document.documentElement.classList.contains('dark');
+                saveUserData();
+            });
+        }
+            
+        if (closeRewardModalBtn) {
+            closeRewardModalBtn.addEventListener('click', () => {
+                const modalContent = rewardModal.querySelector('div');
+                if (modalContent) {
+                    modalContent.classList.remove('scale-100', 'opacity-100');
+                    modalContent.classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => {
+                        rewardModal.classList.add('hidden');
+                    }, 300);
+                }
+            });
+        }
+
+        const resetProgressBtn = document.getElementById('reset-progress');
+        if(resetProgressBtn) {
+            resetProgressBtn.addEventListener('click', resetProgress);
+        }
+
+        if (confirmResetBtn) {
+            confirmResetBtn.addEventListener('click', confirmReset);
+        }
+        if (cancelResetBtn) {
+            cancelResetBtn.addEventListener('click', cancelReset);
+        }
+
+        // Initial Setup
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserData();
+        });
+    </script>
+</body>
+</html>
